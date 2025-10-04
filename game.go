@@ -1,6 +1,9 @@
 package main
 
-import "math"
+import (
+	"fmt"
+	"math"
+)
 
 const PaddleWidth = 60
 const PaddleHeight = 10
@@ -23,6 +26,7 @@ func NewGame(gridWidth, gridHeight int) *Game {
 	return &Game{
 		GridWidth:  gridWidth,
 		GridHeight: gridHeight,
+		BallVector: Vector{Angle: 45, Speed: 5},
 		Lives:      3,
 		Score:      0,
 		Level:      1,
@@ -34,6 +38,10 @@ func (g *Game) Initialize() {
 	g.Lives = 3
 	g.Score = 0
 	g.Level = 1
+}
+
+func (g *Game) CenterPaddle() {
+	g.PaddleX = (g.GridWidth / 2) - (PaddleWidth / 2)
 }
 
 func (g *Game) MovePaddle(direction Direction) {
@@ -58,15 +66,17 @@ func (g *Game) MovePaddle(direction Direction) {
 func (g *Game) PutBallInMiddle() {
 	x := (g.GridWidth / 2) + (BallDiameter / 2)
 	y := (g.PaddleY / 2) + (PaddleHeight / 2)
-	g.BallPosition = Point{x, y}
+	g.BallPosition = Point{float64(x), float64(y)}
 }
 
 func (g *Game) BounceBall(axis Axis) {
 	// TODO: implement angle inversion along given axis
+	g.BallVector.Angle = (g.BallVector.Angle + 90) % 360
 }
 
 func (g *Game) SetRandomUpwardBallVector() {
 	// TODO: implement this
+	g.BallVector.Angle = -30
 }
 
 func (g *Game) MoveBallAlongTrajectory() CollisionType {
@@ -78,35 +88,37 @@ func (g *Game) MoveBallAlongTrajectory() CollisionType {
 	speed += float64((g.Level - 1) * 2)  // make the ball move faster with every level. again, we prob need to adjust this
 
 	// do the math to calculate the new position based on the ball's vector
-	dX := speed * math.Cos(g.BallVector.Angle)
-	dY := speed * math.Sin(g.BallVector.Angle)
+	dX := speed * math.Cos(float64(g.BallVector.Angle))
+	dY := speed * math.Sin(float64(g.BallVector.Angle))
 
-	newX := currentX + int(dX)
-	newY := currentY + int(dY)
+	fmt.Printf("Ball delta coords: %0.2fx%0.2f\n", dX, dY)
+
+	newX := currentX + dX
+	newY := currentY + dY
 
 	// correct based on collisions
 	if newX < 0 {
 		newX = 0
 		collisionType = CollisionTypeWall
 		g.BounceBall(XAxis)
-	} else if newX+BallDiameter > g.GridWidth {
-		newX = g.GridWidth - BallDiameter
+	} else if int(newX)+BallDiameter > g.GridWidth {
+		newX = float64(g.GridWidth - BallDiameter)
 	}
 
 	if newY < 0 {
 		newY = 0
 		collisionType = CollisionTypeWall
 		g.BounceBall(YAxis)
-	} else if newY+BallDiameter > g.GridWidth {
-		newY = g.GridHeight - BallDiameter
+	} else if int(newY)+BallDiameter > g.GridWidth {
+		newY = float64(g.GridHeight - BallDiameter)
 	}
 
 	// There's a collision with the paddle if:
 	// the right edge of the ball's bounding box is at or past the left edge of the paddle and
 	// the left edge of the ball's bounding box is at or before the right edge of the paddle and
 	// the bottom edge of the ball is at or lower than the paddle's top edge
-	if newX+BallDiameter >= g.PaddleX && newX <= g.PaddleX+PaddleWidth && newY+BallDiameter >= g.PaddleY {
-		newY = g.PaddleY - BallDiameter // normalize the ball's Y position
+	if newX+BallDiameter >= float64(g.PaddleX) && newX <= float64(g.PaddleX)+PaddleWidth && newY+BallDiameter >= float64(g.PaddleY) {
+		newY = float64(g.PaddleY - BallDiameter) // normalize the ball's Y position
 		collisionType = CollisionTypePaddle
 		g.BounceBall(YAxis)
 	}

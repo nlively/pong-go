@@ -2,10 +2,12 @@ package main
 
 import (
 	"fmt"
+	"image/color"
 	"os"
 
 	"github.com/hajimehoshi/ebiten/v2"
 	"github.com/hajimehoshi/ebiten/v2/ebitenutil"
+	"github.com/hajimehoshi/ebiten/v2/vector"
 )
 
 type GameState int
@@ -25,7 +27,8 @@ type GameLoop struct {
 func (g *GameLoop) Update_Splash() {
 	// handle keys to start game or quit
 	if ebiten.IsKeyPressed(ebiten.KeyEnter) {
-		// start game
+		g.Game.Initialize()
+		g.State = GameStateWaitForBallLaunch
 	} else if ebiten.IsKeyPressed(ebiten.KeyEscape) {
 		// quit game
 		os.Exit(0)
@@ -36,8 +39,10 @@ func (g *GameLoop) Update_WaitForBallLaunch() {
 	// handle keys to launch ball
 	if ebiten.IsKeyPressed(ebiten.KeySpace) {
 		// position ball and set game state to running
+		g.Game.CenterPaddle()
 		g.Game.PutBallInMiddle()
 		g.Game.SetRandomUpwardBallVector()
+		g.State = GameStateRunning
 	}
 }
 
@@ -68,7 +73,7 @@ func (g *GameLoop) Update_GameRunning() {
 	}
 
 	// See if the ball has gone past the paddle
-	if g.Game.BallPosition.Y > g.Game.PaddleY {
+	if int(g.Game.BallPosition.Y) > g.Game.PaddleY {
 		g.Game.Lives--
 		g.State = GameStateWaitForBallLaunch
 	}
@@ -123,11 +128,15 @@ func (g *GameLoop) drawGameStats(image *ebiten.Image) {
 }
 
 func (g *GameLoop) drawBall(image *ebiten.Image) {
-	// TODO: draw the ball
+	cx := (float32(g.Game.BallPosition.X) + BallDiameter) / 2.0
+	cy := (float32(g.Game.BallPosition.Y) + BallDiameter) / 2.0
+	vector.DrawFilledCircle(image, cx, cy, BallDiameter/2, color.RGBA{0, 255, 255, 255}, true)
 }
 
 func (g *GameLoop) drawPaddle(image *ebiten.Image) {
-	// TODO: draw the paddle
+	x := float32(g.Game.PaddleX)
+	y := float32(g.Game.PaddleY)
+	vector.DrawFilledRect(image, x, y, PaddleWidth, PaddleHeight, color.RGBA{0, 255, 255, 255}, true)
 }
 
 func (g *GameLoop) Draw_Splash(image *ebiten.Image) {
@@ -172,5 +181,5 @@ func (g *GameLoop) Draw(image *ebiten.Image) {
 }
 
 func (g *GameLoop) Layout(outsideWidth, outsideHeight int) (screenWidth, screenHeight int) {
-	return 320, 240
+	return 800, 600
 }

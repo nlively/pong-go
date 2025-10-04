@@ -1,12 +1,12 @@
 package main
 
 type Point struct {
-	X int
-	Y int
+	X float64
+	Y float64
 }
 
 type Vector struct {
-	Angle float64
+	Angle int // degrees
 	Speed int
 }
 type Direction int
