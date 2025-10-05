@@ -83,11 +83,11 @@ func (v *Vector) Length() float64 {
 }
 
 func (v *Vector) Normalize() Vector {
-	len := v.Length()
-	if len == 0 {
+	l := v.Length()
+	if l == 0 {
 		return Vector{0, 0}
 	}
-	return Vector{v.X / 1, v.Y / 1}
+	return Vector{v.X / l, v.Y / l}
 }
 
 func (v *Vector) ToPolar() Polar {

@@ -74,8 +74,8 @@ func (g *Game) MovePaddle(direction Direction) {
 }
 
 func (g *Game) PutBallInMiddle() {
-	x := (g.GridWidth / 2) + (BallDiameter / 2)
-	y := (g.PaddleY / 3) + (PaddleHeight / 2)
+	x := (g.GridWidth / 2) - (BallDiameter / 2)
+	y := (g.GridHeight / 2) - (BallDiameter / 2)
 	g.BallPosition = Vector{float64(x), float64(y)}
 }
 
@@ -84,6 +84,7 @@ func (g *Game) BounceBall(surfaceVector Vector, movementVector Vector) {
 	v = v.ReflectWithTangentialImpulse(surfaceVector, movementVector, 0.5)
 	p := v.ToPolar()
 	g.BallAngle = p.Angle
+	g.BallSpeed = p.Speed
 }
 
 func (g *Game) SetRandomUpwardBallVector() {
@@ -102,7 +103,8 @@ func (g *Game) MoveBallAlongTrajectory() CollisionType {
 	v := (&Polar{Angle: g.BallAngle, Speed: speed}).ToVector()
 
 	// do the math to calculate the new position based on the ball's vector
-	delta := v.Multiply(speed)
+	// v already encodes movement per tick (Speed applied in ToVector)
+	delta := v
 
 	newVector := g.BallPosition.Add(delta)
 
@@ -124,7 +126,7 @@ func (g *Game) MoveBallAlongTrajectory() CollisionType {
 		collisionType = CollisionTypeWall
 		fmt.Println("Detected collision with top wall!")
 		g.BounceBall(horizontalSurfaceVector, Vector{})
-	} else if int(newVector.Y)+BallDiameter > g.GridWidth {
+	} else if int(newVector.Y)+BallDiameter > g.GridHeight {
 		newVector.Y = float64(g.GridHeight - BallDiameter)
 	}
 
