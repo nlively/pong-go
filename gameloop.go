@@ -63,6 +63,8 @@ func (g *GameLoop) Update_GameRunning() {
 		g.Game.MovePaddle(DirectionLeft)
 	} else if ebiten.IsKeyPressed(ebiten.KeyRight) {
 		g.Game.MovePaddle(DirectionRight)
+	} else {
+		g.Game.MovePaddle(DirectionNone)
 	}
 
 	// Progress the ball along its trajectory
@@ -70,24 +72,22 @@ func (g *GameLoop) Update_GameRunning() {
 	if collisionType == CollisionTypePaddle {
 		// Player gets a point
 		g.Game.Score++
+		if g.Game.Score%10 == 0 {
+			g.Game.Level++
+		}
+		if g.Game.Level >= 10 {
+			g.State = GameStateOver
+		}
 	}
 
 	// See if the ball has gone past the paddle
-	if int(g.Game.BallPosition.Y) > g.Game.PaddleY {
+	if int(g.Game.BallPosition.Y+BallDiameter) >= g.Game.GridHeight {
 		g.Game.Lives--
-		g.State = GameStateWaitForBallLaunch
-	}
-
-	// Resolve game state
-	if g.Game.Lives == 0 {
-		g.State = GameStateOver
-	}
-
-	if g.Game.Score > 0 && g.Game.Score%50 == 0 {
-		g.Game.Level++
-	}
-	if g.Game.Level >= 10 {
-		g.State = GameStateOver
+		if g.Game.Lives == 0 {
+			g.State = GameStateOver
+		} else {
+			g.State = GameStateWaitForBallLaunch
+		}
 	}
 }
 
@@ -121,15 +121,21 @@ func (g *GameLoop) drawLevel(image *ebiten.Image) {
 	ebitenutil.DebugPrintAt(image, fmt.Sprintf("Level: %d", g.Game.Level), 200, 0)
 }
 
+func (g *GameLoop) drawAngle(image *ebiten.Image) {
+	ebitenutil.DebugPrintAt(image, fmt.Sprintf("Ball Angle: %0.2f", g.Game.BallAngle), 300, 0)
+}
+
 func (g *GameLoop) drawGameStats(image *ebiten.Image) {
 	g.drawScore(image)
 	g.drawLives(image)
 	g.drawLevel(image)
+	g.drawAngle(image)
 }
 
 func (g *GameLoop) drawBall(image *ebiten.Image) {
-	cx := (float32(g.Game.BallPosition.X) + BallDiameter) / 2.0
-	cy := (float32(g.Game.BallPosition.Y) + BallDiameter) / 2.0
+	radius := BallDiameter / 2.0
+	cx := float32(g.Game.BallPosition.X) + float32(radius)
+	cy := float32(g.Game.BallPosition.Y) + float32(radius)
 	vector.DrawFilledCircle(image, cx, cy, BallDiameter/2, color.RGBA{0, 255, 255, 255}, true)
 }
 
@@ -152,10 +158,13 @@ func (g *GameLoop) Draw_WaitForBallLaunch(image *ebiten.Image) {
 func (g *GameLoop) Draw_GameOver(image *ebiten.Image) {
 	g.drawGameStats(image)
 
+	x := 0
+	y := g.Game.GridHeight / 2
+
 	if g.Game.Lives == 0 {
-		ebitenutil.DebugPrint(image, "Game over. You lost.")
+		ebitenutil.DebugPrintAt(image, "Game over. You lost.", x, y)
 	} else if g.Game.Level >= 10 {
-		ebitenutil.DebugPrint(image, "Game over. You won!")
+		ebitenutil.DebugPrintAt(image, "Game over. You won!", x, y)
 	}
 
 }

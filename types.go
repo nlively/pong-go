@@ -1,19 +1,22 @@
 package main
 
+import "math"
+
 type Point struct {
 	X float64
 	Y float64
 }
 
-type Vector struct {
-	Angle int // degrees
-	Speed int
+func deg2Rad(angleDeg float64) float64 {
+	return angleDeg * (math.Pi / 180.0)
 }
+
 type Direction int
 
 const (
-	DirectionLeft  Direction = 0
-	DirectionRight Direction = 1
+	DirectionLeft  Direction = 1
+	DirectionRight Direction = 2
+	DirectionNone  Direction = 0
 )
 
 type CollisionType int
@@ -22,11 +25,4 @@ const (
 	CollisionTypeNone   CollisionType = 0
 	CollisionTypePaddle CollisionType = 1
 	CollisionTypeWall   CollisionType = 2
-)
-
-type Axis int
-
-const (
-	XAxis Axis = 0
-	YAxis Axis = 1
 )
